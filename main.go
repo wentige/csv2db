@@ -56,6 +56,7 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 		fmt.Println(e)
+		pretty.Println(e)
 	}
 }
 
@@ -108,6 +109,8 @@ func importFile(file File, db *sql.DB) {
 
 	fmt.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
 
+	db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
+
 	tabcols := make([]string, len(colMap))
 	csvcols := make([]int, len(colMap))
 
@@ -119,8 +122,8 @@ func importFile(file File, db *sql.DB) {
 		i++
 	}
 
-	pretty.Println(tabcols)
-	pretty.Println(csvcols)
+	//pretty.Println(tabcols)
+	//pretty.Println(csvcols)
 
 	records, err := readCsvFile(file)
 	if err == nil {
@@ -136,7 +139,7 @@ func importFile(file File, db *sql.DB) {
 			buf = append(buf, row)
 			if len(buf) >= 5 {
 				sql := InsertSql(table, tabcols, buf)
-				println(sql)
+				//println(sql)
 				_, err = db.Exec(sql)
 				if err != nil {
 					fmt.Println(err)
