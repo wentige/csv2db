@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-type Database struct {
+type DatabaseConf struct {
 	Host     string `toml:"host"`
 	Port     string `toml:"port"`
 	Username string `toml:"username"`
@@ -22,18 +22,19 @@ type Database struct {
 	Name     string `toml:"dbname"`
 }
 
-type File struct {
+type FileConf struct {
 	CsvFile   string            `toml:"csvfile"`
 	Delimiter string            `toml:"delimiter"`
 	HasHeader bool              `toml:"hasheader"`
 	Table     string            `toml:"table"`
+	Truncate  bool              `toml:"truncate"`
 	ColMap    map[string]string `toml:"colmap"`
 }
 
 // ./config.toml
 type Config struct {
-	Database Database `toml:"Database"`
-	Files    []File   `toml:"Files"`
+	Database DatabaseConf `toml:"Database"`
+	Files    []FileConf   `toml:"Files"`
 }
 
 func main() {
@@ -103,12 +104,15 @@ func openDatabase(cfg Config) *sql.DB {
 	return db
 }
 
-func importFile(file File, db *sql.DB) {
+func importFile(file FileConf, db *sql.DB) {
 	filename := file.CsvFile
 	table := file.Table
 
 	log.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
-	db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
+
+    if file.Truncate {
+        db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
+    }
 
 	colMap := file.ColMap
 	tabcols := make([]string, len(colMap))
@@ -167,30 +171,24 @@ func importFile(file File, db *sql.DB) {
 	log.Println("End\n")
 }
 
-func readCsvFile(file File) ([][]string, error) {
-	filename := file.CsvFile
-	delimiter := file.Delimiter
-	hasHeader := file.HasHeader
-
-	f, err := os.Open(filename)
+func readCsvFile(file FileConf) ([][]string, error) {
+	f, err := os.Open(file.CsvFile)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	defer f.Close()
 
 	r := csv.NewReader(f)
-	if delimiter != "" {
-		r.Comma = []rune(delimiter)[0]
+	if file.Delimiter != "" {
+		r.Comma = []rune(file.Delimiter)[0]
 	}
 
 	records, err := r.ReadAll()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
-	if hasHeader {
+	if file.HasHeader {
 		records = records[1:]
 	}
 

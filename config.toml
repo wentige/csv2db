@@ -10,6 +10,7 @@ csvfile = "file1.csv"
 delimiter = ","
 hasheader = true
 table = "table1"
+truncate = true
 [Files.colmap]
 "column1" = "1"
 "column2" = "2"
