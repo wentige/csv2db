@@ -36,15 +36,12 @@ type Config struct {
 	Files    []File   `toml:"Files"`
 }
 
-var db *sql.DB
-var err error
-var cfg Config
-
 func main() {
-	loadConfig()
+	cfg := loadConfig()
 	//pretty.Println(cfg)
 
-	db = openDatabase()
+	//var db *sql.DB
+	db := openDatabase(cfg)
 	defer db.Close()
 
 	for _, file := range cfg.Files {
@@ -60,10 +57,11 @@ func check(e error) {
 	}
 }
 
-func loadConfig() {
+func loadConfig() Config {
 	data, err := ioutil.ReadFile("config.toml")
 	check(err)
 
+	var cfg Config
 	toml.Decode(string(data), &cfg)
 	check(err)
 
@@ -71,9 +69,11 @@ func loadConfig() {
 	//fmt.Println(cfg.Files[0].CsvFile)
 	//fmt.Println(cfg.Files[0].HasTitle)
 	//fmt.Println(cfg.Files[0].Table)
+
+	return cfg
 }
 
-func openDatabase() *sql.DB {
+func openDatabase(cfg Config) *sql.DB {
 	host := cfg.Database.Host
 	port := cfg.Database.Port
 	username := cfg.Database.Username
@@ -93,7 +93,7 @@ func openDatabase() *sql.DB {
 	//println(dsn)
 	//return nil
 
-	db, err = sql.Open("mysql", dsn)
+	db, err := sql.Open("mysql", dsn)
 	check(err)
 
 	err = db.Ping()
