@@ -11,11 +11,11 @@ delimiter = ","
 hasheader = true
 table = "table1"
 [Files.colmap]
-"1" = "column1"
-"2" = "column2"
-"3" = "column3"
-"4" = "column4"
-"5" = "column5"
+"column1" = "1"
+"column2" = "2"
+"column3" = "3"
+"column4" = "4"
+"column5" = "5"
 
 [[Files]]
 csvfile = "file2.csv"
@@ -23,15 +23,16 @@ delimiter = ";"
 hasheader = true
 table = "table2"
 [Files.colmap]
-"5" = "column1"
-"4" = "column2"
-"3" = "column3"
-"2" = "column4"
-"1" = "column5"
+"column1" = "5"
+"column2" = "4"
+"column3" = "3"
+"column4" = "2"
+"column5" = "1"
+"column6" = "1"
 
 [[Files]]
 csvfile = "file3.csv"
 delimiter = "\t"
 hasheader = true
 table = "table3"
-colmap = { "101" = "col1", "102" = "col2", "103" = "col3" }
+colmap = { "col1" = "101", "col2" = "102", "col3" = "103" }

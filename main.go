@@ -106,19 +106,18 @@ func openDatabase(cfg Config) *sql.DB {
 func importFile(file File, db *sql.DB) {
 	filename := file.CsvFile
 	table := file.Table
-	colMap := file.ColMap
 
 	log.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
-
 	db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
 
+	colMap := file.ColMap
 	tabcols := make([]string, len(colMap))
 	csvcols := make([]int, len(colMap))
 
 	var i = 0
-	for idx, colname := range colMap {
-		k, _ := strconv.Atoi(idx)
-		tabcols[i] = colname
+	for tabcolname, csvcolidx := range colMap {
+		k, _ := strconv.Atoi(csvcolidx)
+		tabcols[i] = tabcolname
 		csvcols[i] = k - 1 // the index is 1-based
 		i++
 	}
@@ -127,24 +126,29 @@ func importFile(file File, db *sql.DB) {
 	//pretty.Println(csvcols)
 
 	records, err := readCsvFile(file)
-	if err == nil {
-		//pretty.Println(records)
-
+	if err != nil {
+        log.Println(err)
+	} else {
 		buf := make([]map[string]string, 0)
+
 		for _, fields := range records {
 			row := make(map[string]string)
+
 			for i, colname := range tabcols {
 				c := csvcols[i]
 				row[colname] = strings.Trim(fields[c], " \t")
 			}
+
 			buf = append(buf, row)
-			if len(buf) >= 5 {
+			if len(buf) >= 1000 {
 				sql := InsertSql(table, tabcols, buf)
 				//println(sql)
+
 				_, err = db.Exec(sql)
 				if err != nil {
-					fmt.Println(err)
+					log.Println(err)
 				}
+
 				buf = make([]map[string]string, 0)
 			}
 		}
@@ -152,12 +156,13 @@ func importFile(file File, db *sql.DB) {
 		if len(buf) > 0 {
 			sql := InsertSql(table, tabcols, buf)
 			//println(sql)
+
 			_, err = db.Exec(sql)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 		}
-	}
+    }
 
 	log.Println("End\n")
 }
@@ -188,6 +193,8 @@ func readCsvFile(file File) ([][]string, error) {
 	if hasHeader {
 		records = records[1:]
 	}
+
+    //pretty.Println(records)
 
 	return records, nil
 }
