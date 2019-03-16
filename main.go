@@ -158,6 +158,8 @@ func importFile(file File, db *sql.DB) {
 			}
 		}
 	}
+
+	log.Println("End\n")
 }
 
 func readCsvFile(file File) ([][]string, error) {
@@ -167,7 +169,7 @@ func readCsvFile(file File) ([][]string, error) {
 
 	f, err := os.Open(filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return nil, err
 	}
 	defer f.Close()
