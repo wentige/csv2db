@@ -38,7 +38,6 @@ type Config struct {
 
 func main() {
 	cfg := loadConfig()
-	//pretty.Println(cfg)
 
 	//var db *sql.DB
 	db := openDatabase(cfg)
@@ -64,6 +63,8 @@ func loadConfig() Config {
 	var cfg Config
 	toml.Decode(string(data), &cfg)
 	check(err)
+
+	//pretty.Println(cfg)
 
 	//fmt.Printf("%+v\n", cfg)
 	//fmt.Println(cfg.Files[0].CsvFile)
@@ -107,7 +108,7 @@ func importFile(file File, db *sql.DB) {
 	table := file.Table
 	colMap := file.ColMap
 
-	fmt.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
+	log.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
 
 	db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
 
