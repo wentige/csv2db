@@ -7,11 +7,13 @@ import (
 	"github.com/BurntSushi/toml"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/kr/pretty"
+	"github.com/robfig/cron"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+	//"time"
 )
 
 type DatabaseConf struct {
@@ -28,6 +30,7 @@ type FileConf struct {
 	HasHeader bool              `toml:"hasheader"`
 	Table     string            `toml:"table"`
 	Truncate  bool              `toml:"truncate"`
+	RunAt     string            `toml:"runat"`
 	ColMap    map[string]string `toml:"colmap"`
 }
 
@@ -40,13 +43,20 @@ type Config struct {
 func main() {
 	cfg := loadConfig()
 
-	//var db *sql.DB
-	db := openDatabase(cfg)
-	defer db.Close()
+	var db *sql.DB
+	//db := openDatabase(cfg)
+	//defer db.Close()
 
+	c := cron.New()
 	for _, file := range cfg.Files {
-		importFile(file, db)
+		fileInfo := file // This is IMPORTANT!
+		c.AddFunc(file.RunAt, func() { importFile(fileInfo, db) })
 	}
+	c.Start()
+
+	text := "Press Any Key to Exit..."
+	fmt.Println(text)
+	fmt.Scanln(&text)
 }
 
 func check(e error) {
@@ -109,10 +119,11 @@ func importFile(file FileConf, db *sql.DB) {
 	table := file.Table
 
 	log.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
+	return
 
-    if file.Truncate {
-        db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
-    }
+	if file.Truncate {
+		db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
+	}
 
 	colMap := file.ColMap
 	tabcols := make([]string, len(colMap))
@@ -131,7 +142,7 @@ func importFile(file FileConf, db *sql.DB) {
 
 	records, err := readCsvFile(file)
 	if err != nil {
-        log.Println(err)
+		log.Println(err)
 	} else {
 		buf := make([]map[string]string, 0)
 
@@ -166,7 +177,7 @@ func importFile(file FileConf, db *sql.DB) {
 				log.Println(err)
 			}
 		}
-    }
+	}
 
 	log.Println("End\n")
 }
@@ -192,7 +203,7 @@ func readCsvFile(file FileConf) ([][]string, error) {
 		records = records[1:]
 	}
 
-    //pretty.Println(records)
+	//pretty.Println(records)
 
 	return records, nil
 }
