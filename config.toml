@@ -11,6 +11,7 @@ delimiter = ","
 hasheader = true
 table = "table1"
 truncate = true
+runat = "*/5 * * * * *"
 [Files.colmap]
 "column1" = "1"
 "column2" = "2"
@@ -23,6 +24,7 @@ csvfile = "file2.csv"
 delimiter = ";"
 hasheader = true
 table = "table2"
+runat = "*/10 * * * * *"
 [Files.colmap]
 "column1" = "5"
 "column2" = "4"
@@ -36,4 +38,5 @@ csvfile = "file3.csv"
 delimiter = "\t"
 hasheader = true
 table = "table3"
+runat = "*/15 * * * * *"
 colmap = { "col1" = "101", "col2" = "102", "col3" = "103" }
