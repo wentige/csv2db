@@ -4,41 +4,14 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"fmt"
-	"github.com/BurntSushi/toml"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/kr/pretty"
+	//"github.com/kr/pretty"
 	"github.com/robfig/cron"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	//"time"
 )
-
-type DatabaseConf struct {
-	Host     string `toml:"host"`
-	Port     string `toml:"port"`
-	Username string `toml:"username"`
-	Password string `toml:"password"`
-	Name     string `toml:"dbname"`
-}
-
-type FileConf struct {
-	CsvFile   string            `toml:"csvfile"`
-	Delimiter string            `toml:"delimiter"`
-	HasHeader bool              `toml:"hasheader"`
-	Table     string            `toml:"table"`
-	Truncate  bool              `toml:"truncate"`
-	RunAt     string            `toml:"runat"`
-	ColMap    map[string]string `toml:"colmap"`
-}
-
-// ./config.toml
-type Config struct {
-	Database DatabaseConf `toml:"Database"`
-	Files    []FileConf   `toml:"Files"`
-}
 
 func main() {
 	cfg := loadConfig()
@@ -59,67 +32,12 @@ func main() {
 	fmt.Scanln(&text)
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-		fmt.Println(e)
-		pretty.Println(e)
-	}
-}
-
-func loadConfig() Config {
-	data, err := ioutil.ReadFile("config.toml")
-	check(err)
-
-	var cfg Config
-	toml.Decode(string(data), &cfg)
-	check(err)
-
-	//pretty.Println(cfg)
-
-	//fmt.Printf("%+v\n", cfg)
-	//fmt.Println(cfg.Files[0].CsvFile)
-	//fmt.Println(cfg.Files[0].HasTitle)
-	//fmt.Println(cfg.Files[0].Table)
-
-	return cfg
-}
-
-func openDatabase(cfg Config) *sql.DB {
-	host := cfg.Database.Host
-	port := cfg.Database.Port
-	username := cfg.Database.Username
-	password := cfg.Database.Password
-	name := cfg.Database.Name
-
-	if port == "" {
-		port = "3306"
-	}
-
-	var dsn string
-	if password == "" {
-		dsn = fmt.Sprintf("%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true", username, host, port, name)
-	} else {
-		dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=true", username, password, host, port, name)
-	}
-	//println(dsn)
-	//return nil
-
-	db, err := sql.Open("mysql", dsn)
-	check(err)
-
-	err = db.Ping()
-	check(err)
-
-	return db
-}
-
 func importFile(file FileConf, db *sql.DB) {
 	filename := file.CsvFile
 	table := file.Table
 
 	log.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
-	return
+return
 
 	if file.Truncate {
 		db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
@@ -156,7 +74,7 @@ func importFile(file FileConf, db *sql.DB) {
 
 			buf = append(buf, row)
 			if len(buf) >= 1000 {
-				sql := InsertSql(table, tabcols, buf)
+				sql := insertSql(table, tabcols, buf)
 				//println(sql)
 
 				_, err = db.Exec(sql)
@@ -169,7 +87,7 @@ func importFile(file FileConf, db *sql.DB) {
 		}
 
 		if len(buf) > 0 {
-			sql := InsertSql(table, tabcols, buf)
+			sql := insertSql(table, tabcols, buf)
 			//println(sql)
 
 			_, err = db.Exec(sql)
@@ -206,30 +124,4 @@ func readCsvFile(file FileConf) ([][]string, error) {
 	//pretty.Println(records)
 
 	return records, nil
-}
-
-func InsertSql(table string, columns []string, data []map[string]string) string {
-
-	columnStr := strings.Join(columns, "`, `")
-
-	updateList := make([]string, len(columns))
-	for i, col := range columns {
-		updateList[i] = fmt.Sprintf("`%s`=VALUES(`%s`)", col, col)
-	}
-	updateStr := strings.Join(updateList, ",\n")
-
-	valueList := make([]string, 0)
-	for _, row := range data {
-		valueRow := make([]string, 0)
-		//for _, val := range row { // WRONG
-		for _, col := range columns {
-			valueRow = append(valueRow, "'"+row[col]+"'")
-		}
-		valueList = append(valueList, "("+strings.Join(valueRow, ", ")+")")
-	}
-	valueStr := strings.Join(valueList, ",\n")
-
-	//return "INSERT INTO `" + table + "` (" + columnStr + ") VALUES\n" + valueStr + updateStr;
-	return fmt.Sprintf("INSERT INTO `%s` (`%s`) VALUES\n%s\nON DUPLICATE KEY UPDATE\n%s",
-		table, columnStr, valueStr, updateStr)
 }
