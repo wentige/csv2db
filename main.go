@@ -6,6 +6,7 @@ import (
 	"fmt"
 	//"github.com/kr/pretty"
 	"github.com/robfig/cron"
+	"github.com/joho/sqltocsv"
 	"log"
 	"os"
 	"strconv"
@@ -124,4 +125,16 @@ func readCsvFile(file FileConf) ([][]string, error) {
 	//pretty.Println(records)
 
 	return records, nil
+}
+
+func exportTable(table string, db *sql.DB) {
+    sql := fmt.Sprintf("SELECT * FROM `%s`", table)
+	rows, _ := db.Query(sql)
+	//pretty.Println(rows)
+
+	converter := sqltocsv.New(rows)
+	converter.TimeFormat = "2006-01-02 15:04:05"
+    filename := fmt.Sprintf("%s.csv", table)
+	err := converter.WriteFile(filename)
+    check(err)
 }
