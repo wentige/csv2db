@@ -5,8 +5,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	//"github.com/kr/pretty"
-	"github.com/robfig/cron"
 	"github.com/joho/sqltocsv"
+	"github.com/robfig/cron"
 	"log"
 	"os"
 	"strconv"
@@ -38,7 +38,7 @@ func importFile(file FileConf, db *sql.DB) {
 	table := file.Table
 
 	log.Printf("Importing csv file '%s' into table '%s'\n", filename, table)
-return
+	return
 
 	if file.Truncate {
 		db.Exec(fmt.Sprintf("TRUNCATE TABLE `%s`", table))
@@ -128,13 +128,13 @@ func readCsvFile(file FileConf) ([][]string, error) {
 }
 
 func exportTable(table string, db *sql.DB) {
-    sql := fmt.Sprintf("SELECT * FROM `%s`", table)
+	sql := fmt.Sprintf("SELECT * FROM `%s`", table)
 	rows, _ := db.Query(sql)
 	//pretty.Println(rows)
 
 	converter := sqltocsv.New(rows)
 	converter.TimeFormat = "2006-01-02 15:04:05"
-    filename := fmt.Sprintf("%s.csv", table)
+	filename := fmt.Sprintf("%s.csv", table)
 	err := converter.WriteFile(filename)
-    check(err)
+	check(err)
 }
