@@ -14,17 +14,18 @@ import (
 	//"time"
 )
 
+var db *sql.DB
+
 func main() {
 	cfg := loadConfig()
 
-	var db *sql.DB
-	//db := openDatabase(cfg)
+	//db = openDatabase(cfg)
 	//defer db.Close()
 
 	c := cron.New()
 	for _, file := range cfg.Files {
 		fileInfo := file // This is IMPORTANT!
-		c.AddFunc(file.RunAt, func() { importFile(fileInfo, db) })
+		c.AddFunc(file.RunAt, func() { importFile(fileInfo) })
 	}
 	c.Start()
 
@@ -33,7 +34,7 @@ func main() {
 	fmt.Scanln(&text)
 }
 
-func importFile(file FileConf, db *sql.DB) {
+func importFile(file FileConf) {
 	filename := file.CsvFile
 	table := file.Table
 
@@ -127,7 +128,7 @@ func readCsvFile(file FileConf) ([][]string, error) {
 	return records, nil
 }
 
-func exportTable(table string, db *sql.DB) {
+func exportTable(table string) {
 	sql := fmt.Sprintf("SELECT * FROM `%s`", table)
 	rows, _ := db.Query(sql)
 	//pretty.Println(rows)
